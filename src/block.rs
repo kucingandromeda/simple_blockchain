@@ -1,8 +1,9 @@
 pub mod block{
     use std::sync::Arc;
+    use std::clone::Clone;
 
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct Block{
         pub name: String,
         pub value: isize,
