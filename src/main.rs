@@ -11,7 +11,7 @@ fn main(){
     let yazem_block = Block::new("yazem".to_string(), 10);
     chain.add_block(yazem_block);
 
-    let rio_block = Block::new("rio".to_string(), 10000);
-    chain.add_block(rio_block);
-    println!("{:#?}", chain.chain)
+    // let rio_block = Block::new("rio".to_string(), 10000);
+    // chain.add_block(rio_block);
+    // println!("{:#?}", chain.chain)
 }
