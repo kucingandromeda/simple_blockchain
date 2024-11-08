@@ -34,7 +34,7 @@ pub mod chain{
          block.previous_hash = previos_hash;
          block.hash = Some(block.hash_generator());
         
-         block.mining_time(2, 0);
+         block.mining_time(2, 00);
          self.chain.push(block);
         }
 
