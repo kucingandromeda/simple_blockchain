@@ -14,7 +14,7 @@ pub mod chain{
 
             let mut genesis_block = Block::new("genesis".to_string(), 0);
             genesis_block.previous_hash = Some("00000".to_string());
-            genesis_block.hash = Some(genesis_block.hash_generator());
+            genesis_block.mining_time(2, 00);
 
             Chain{
                 chain:vec![genesis_block]
