@@ -1,16 +1,21 @@
 pub mod block{
-    use std::{borrow::Cow, clone::Clone, fmt::format};
-    use openssl::{pkey::Private, rsa::{self, Padding, Rsa}, sha::sha256};
+    use std::clone::Clone;
+    use openssl::{rsa::{self, Padding}, sha::sha256};
     use hex;
     use chrono;
+    use crate::transaction::transaction::Transaction;
+    use serde_json;
+    use serde::{Deserialize, Serialize};
 
-    #[derive(Clone)]
+    #[derive(Clone, Serialize, Deserialize)]
+    #[warn(dead_code)]
     enum PEM{
         Private(String)
     }
 
+    #[warn(dead_code)]
     impl PEM {
-        fn unwarp_PEM(&self){
+        fn unwrap_pem(&self){
             match self {
                 Self::Private(value) => println!("{}", value)
             }
@@ -26,10 +31,10 @@ pub mod block{
     }
 
 
-    #[derive(Debug, Clone)]
+    #[warn(dead_code)]
+    #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct Block{
-        pub name: String,
-        pub value: isize,
+        pub transaction:Vec<Transaction>,
         pub previous_hash:Option<String>,
         pub hash:Option<String>,
         pub count:usize,
@@ -38,31 +43,41 @@ pub mod block{
         pub digital_signature:Option<Vec<u8>>,
         pub public_pem:Option<String>,
         private_pem:Option<PEM>,
-        RSA_size:Option<u32>,
+        rsa_size:Option<u32>,
 
     }
 
     impl Block {
         
-        pub fn new(name:String, value:isize) -> Self{
+        pub fn new(transaction:Vec<Transaction>) -> Self{
 
             Block{
-                name,
-                value,
+                transaction,
                 previous_hash:None,
                 hash:None,
                 count:0,
                 time:format!("{}", chrono::Local::now()),
                 //RSA
                 digital_signature:None,
-                RSA_size:None,
+                rsa_size:None,
                 public_pem:None,
                 private_pem:None,
             }
         }
 
         pub fn hash_generator(&self)-> String{
-            let sha = sha256(format!("{}{}{}{}", self.name, self.value, self.previous_hash.clone().unwrap(), self.count).as_bytes());
+            let mut copy_block = self.clone();
+            copy_block.hash = None;
+            copy_block.digital_signature = None;
+            copy_block.rsa_size = None;
+            copy_block.public_pem = None;
+            copy_block.private_pem = None;
+
+            let json = serde_json::to_string(&copy_block)
+                .expect("error create json from copy block");
+            // println!("{}", json);
+
+            let sha = sha256(format!("{}{}",self.previous_hash.clone().unwrap(), self.count).as_bytes());
             hex::encode(sha)
         }
 
@@ -87,7 +102,7 @@ pub mod block{
             self.public_pem = Some(hex::encode(public_pem));
             self.private_pem = Some(PEM::Private(hex::encode(private_pem)));
             self.digital_signature = Some(encrypted);   
-            self.RSA_size = Some(rsa_block.size());
+            self.rsa_size = Some(rsa_block.size());
         }
 
         pub fn verify_digital_signature_fn(&self)-> bool{
@@ -99,7 +114,7 @@ pub mod block{
                 .clone()
                 .expect("digital signature not found");
 
-            let mut decrypted = vec![0; self.RSA_size.expect("rsa_fn not found") as usize];
+            let mut decrypted = vec![0; self.rsa_size.expect("rsa_fn not found") as usize];
 
             let public_pem = hex::decode(self.public_pem.clone().unwrap())
                 .unwrap();
