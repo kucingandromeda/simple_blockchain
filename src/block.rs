@@ -1,5 +1,5 @@
 pub mod block{
-    use std::clone::Clone;
+    use std::{clone::Clone, fmt::Debug};
     use openssl::{rsa::{self, Padding}, sha::sha256};
     use hex;
     use chrono;
@@ -10,22 +10,32 @@ pub mod block{
     #[derive(Clone, Serialize, Deserialize)]
     #[warn(dead_code)]
     enum PEM{
-        Private(String)
+        Private(String),
+        Signature(Vec<u8>)
     }
 
     #[warn(dead_code)]
     impl PEM {
         fn unwrap_pem(&self){
             match self {
-                Self::Private(value) => println!("{}", value)
+                PEM::Private(value) => println!("{}", value),
+                PEM::Signature(_) => ()
+            }
+        }
+
+        fn unwrap_signature(&self)-> Option<Vec<u8>>{
+            match self{
+                PEM::Signature(sign) => Some(sign.clone()),
+                PEM::Private(_) => None
             }
         }
     }
 
-    impl std::fmt::Debug for PEM {
+    impl Debug for PEM {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             f.debug_struct("PEM")
-                .field("Private",&"---")
+                .field("Private", &"---")
+                .field("Signature", &"Signature")
                 .finish()
         }
     }
@@ -40,7 +50,7 @@ pub mod block{
         pub count:usize,
         time:String,
         // RSA
-        pub digital_signature:Option<Vec<u8>>,
+        pub digital_signature:Option<PEM>,
         pub public_pem:Option<String>,
         private_pem:Option<PEM>,
         rsa_size:Option<u32>,
@@ -77,7 +87,10 @@ pub mod block{
                 .expect("error create json from copy block");
             // println!("{}", json);
 
-            let sha = sha256(format!("{}{}",self.previous_hash.clone().unwrap(), self.count).as_bytes());
+            let sha = sha256(format!("{}{}",self.previous_hash
+                    .clone()
+                    .expect("previos hash not found"), self.count)
+                .as_bytes());
             hex::encode(sha)
         }
 
@@ -101,7 +114,7 @@ pub mod block{
             // set up RSA in block
             self.public_pem = Some(hex::encode(public_pem));
             self.private_pem = Some(PEM::Private(hex::encode(private_pem)));
-            self.digital_signature = Some(encrypted);   
+            self.digital_signature = Some(PEM::Signature(encrypted));
             self.rsa_size = Some(rsa_block.size());
         }
 
@@ -112,7 +125,9 @@ pub mod block{
             // hash_decrypted
             let digital_signatur = self.digital_signature
                 .clone()
-                .expect("digital signature not found");
+                .expect("digital signature not found")
+                .unwrap_signature()
+                .unwrap();
 
             let mut decrypted = vec![0; self.rsa_size.expect("rsa_fn not found") as usize];
 
@@ -157,7 +172,7 @@ pub mod block{
             self.digital_signature_generator();
             self.verify_digital_signature_fn();
             // println!("{:?}", self.verify_digital_signature_fn());
-            println!("\n mining clear:{} | digital signature has created \n", self.hash.clone().unwrap());
+            // println!("\n mining clear:{} | digital signature has created \n", self.hash.clone().unwrap());
         }
 
 
