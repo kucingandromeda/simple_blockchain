@@ -1,5 +1,7 @@
 pub mod chain{
 
+    use openssl::rsa::Padding;
+
     use crate::transaction::transaction::Transaction;
     use crate::block::block::Block;
 
@@ -36,8 +38,31 @@ pub mod chain{
             target.clone()
         }
 
-        pub fn create_transaction(&mut self, transaction:Transaction){
+        pub fn create_transaction(&mut self, transaction:Transaction, signature:Vec<u8>)-> Result<(), String>{
+            let hash = transaction.get_hash().clone();
+            let public_key = transaction.from_address
+                .clone()
+                .expect("\n public key not found when verify signature \n");
+            let public_key = hex::decode(public_key)
+                .expect("\n error on decode public_key in verify signature");
+            let sign_rsa = openssl::rsa::Rsa::public_key_from_pem(&public_key)
+                .expect("\n error set public key while verify signature \n");
+
+            let mut signature_decrypted = vec![0;sign_rsa.size() as usize];
+            sign_rsa.public_decrypt(&signature, &mut signature_decrypted, Padding::PKCS1)
+                .expect("\n error decrypted signature while verify signature \n");
+
+            if hash != String::from_utf8_lossy(&signature_decrypted)[..64]{
+                // println!("bad");
+                return Err("\n hash and signature not same! \n".to_string());
+            }
+
+            // println!("ok");
+
             self.pending_transaction.push(transaction);
+            Ok(())
+
+
         }
 
         pub fn mine_pending_transaction(&mut self, mining_reward_address:String){
