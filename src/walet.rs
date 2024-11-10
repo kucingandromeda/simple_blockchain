@@ -1,6 +1,6 @@
 pub mod walet{
     use std::fmt::Debug;
-    use crate::transaction::{self, transaction::Transaction};
+    use crate::transaction::transaction::Transaction;
     use openssl::rsa::{self, Padding};
 
     #[derive(serde::Serialize, serde::Deserialize)]
@@ -41,9 +41,6 @@ pub mod walet{
         }
 
         pub fn send_payment(&self, amount:usize, to_public_key:&String)-> (Transaction, Vec<u8>){
-
-            
-
             let transaction = Transaction::new(Some(self.public_key.clone()), Some(to_public_key.clone()), amount);
             let hash = transaction.get_hash();
 

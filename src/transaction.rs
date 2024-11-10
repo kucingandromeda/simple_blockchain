@@ -1,7 +1,6 @@
 pub mod transaction{
     use std::clone::Clone;
     use serde::{Deserialize, Serialize};
-    use  serde_json::{Deserializer, Serializer};
 
     #[derive(Debug, Clone, Deserialize, Serialize)]
     pub struct Transaction{

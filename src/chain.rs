@@ -26,7 +26,7 @@ pub mod chain{
 
             Chain{
                 chain:vec![genesis_block],
-                mining_reward:50,
+                mining_reward:100,
                 pending_transaction:Vec::new(),
                 difficult:2,
                 fill:0,
@@ -105,20 +105,6 @@ pub mod chain{
             }
             return balance;
         }
-
-        // not use
-        // pub fn add_block(&mut self, mut block:Block){
-
-        //  let previos_block = self.get_latest_block();
-        //  let previos_hash = previos_block.hash;
-        
-        //  block.previous_hash = previos_hash;
-        //  block.hash = Some(block.hash_generator());
-        
-        //  block.mining_time(2, 0);
-        // //  self.chain.push(block);
-        // }
-
     }
 
 }
